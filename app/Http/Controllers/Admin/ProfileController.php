@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Admin;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Profile;
+use App\ProfileHistory;
+use Carbon\Carbon;
 
 class ProfileController extends Controller
 {
@@ -31,15 +33,15 @@ class ProfileController extends Controller
 
  public function index(Request $request)
   {
-      $cond_title = $request->cond_title;
-      if ($cond_title != '') {
+      $cond_name = $request->cond_name;
+      if ($cond_name != '') {
           // 検索されたら検索結果を取得する
-          $posts = profile::where('title', $cond_title)->get();
+          $posts = profile::where('name', $cond_name)->get();
       } else {
           // それ以外はすべてのニュースを取得する
           $posts = profile::all();
       }
-      return view('admin.profile.index', ['posts' => $posts, 'cond_title' => $cond_title]);
+      return view('admin.profile.index', ['posts' => $posts, 'cond_name' => $cond_name]);
   }
 
     public function edit(Request $request)
@@ -64,8 +66,14 @@ class ProfileController extends Controller
       unset($profile_form['_token']);
       // 該当するデータを上書きして保存する
       $profile->fill($profile_form)->save();
-      return redirect('admin/profile');
-  }
+      
+      $profilehistory = new ProfileHistory;
+      $profilehistory->profile_id = $profile->id;
+      $profilehistory->edited_at = Carbon::now();
+      $profilehistory->save();
+
+        return redirect('admin/profile/');
+    }
   
   public function delete(Request $request)
   {
